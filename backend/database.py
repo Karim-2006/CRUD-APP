@@ -12,6 +12,7 @@ client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DETAILS)
 database = client.products_db
 
 product_collection = database.get_collection("products_collection")
+user_collection = database.get_collection("users_collection")
 
 # helpers
 
@@ -22,6 +23,13 @@ def product_helper(product) -> dict:
         "description": product["description"],
         "price": product["price"],
         "stock": product["stock"],
+    }
+
+def user_helper(user) -> dict:
+    return {
+        "id": str(user["_id"]),
+        "username": user["username"],
+        "email": user["email"],
     }
 
 async def retrieve_products():
@@ -57,3 +65,12 @@ async def delete_product(id: str):
     if product:
         await product_collection.delete_one({"_id": ObjectId(id)})
         return True
+
+async def add_user(user_data: dict) -> dict:
+    user = await user_collection.insert_one(user_data)
+    new_user = await user_collection.find_one({"_id": user.inserted_id})
+    return user_helper(new_user)
+
+async def retrieve_user(email: str):
+    user = await user_collection.find_one({"email": email})
+    return user
